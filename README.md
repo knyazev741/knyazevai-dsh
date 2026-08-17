@@ -15,10 +15,10 @@ npx @deepseek-ai/dsh plugin --profile web add -w @knyazevai/dsh
 npx @deepseek-ai/dsh web
 ```
 
-Пока пакет не на npm:
+Пока пакет не на npm — ставь с GitHub:
 
 ```sh
-npx @deepseek-ai/dsh plugin --profile web add -w git+https://git.knyazevai.work/knyaz/knyazevai-dsh.git
+npx @deepseek-ai/dsh plugin --profile web add -w git+https://github.com/knyazev741/knyazevai-dsh.git
 ```
 
 Локально из клона:
