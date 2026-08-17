@@ -1,0 +1,37 @@
+# Knyazev AI provider for DeepSeek Harness.
+# Applied after dsh-base / dsh-web-app. Restates llm-pi-ai config so the
+# route exists in the composition base; user settings still merge per provider
+# and still own the API key. Do not retarget this row from another bundle.
+- id: llm-pi-ai
+  config:
+    providers:
+      knyazev-ai:
+        displayName: Knyazev AI
+        apiKeyEnv: KNYAZEV_AI_API_KEY
+        api: openai-completions
+        baseURL: https://knyazevai.work/v1
+        compat:
+          thinkingFormat: qwen
+          supportsReasoningEffort: false
+        reasoning: high
+        models:
+          - id: deepseek-v4-flash
+            name: DeepSeek V4 Flash
+            contextWindow: 400000
+            maxTokens: 40000
+            reasoningEfforts:
+              off: null
+              high: high
+              max: max
+          - id: kimi-2.6
+            name: Kimi 2.6
+            contextWindow: 262144
+            maxTokens: 40000
+            reasoningEfforts:
+              off: null
+              high: high
+              max: max
+          - id: minimax-2.7
+            name: MiniMax 2.7
+            contextWindow: 204800
+            maxTokens: 40000

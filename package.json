@@ -1,0 +1,42 @@
+{
+  "name": "@knyazevai/dsh",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness plugin: Knyazev AI models with thinking and effort",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://git.knyazevai.work/knyaz/knyazevai-dsh.git"
+  },
+  "homepage": "https://knyazevai.work/docs",
+  "bugs": {
+    "url": "https://git.knyazevai.work/knyaz/knyazevai-dsh/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "cordis.patch.yml",
+    "lib",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./lib/provider.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "knyazevai",
+    "plugin"
+  ]
+}
