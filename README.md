@@ -50,7 +50,15 @@ pnpm dsh plugin --profile web add @knyazevai/dsh
 pnpm dsh web
 ```
 
-Фикс `maxSummarizationInputTokens` — код харнесса, он есть только в этой сборке; плагин несёт его конфиг (только для `knyazev-ai`). Обновление: `git pull`, затем `pnpm install && pnpm run build`.
+Фикс `maxSummarizationInputTokens` — код харнесса, он есть только в этой сборке; плагин несёт его конфиг (только для `knyazev-ai`).
+
+**Как форк держится свежим по upstream (автоматически, с AI-ревью).** В форке есть два воркфлоу:
+- `upstream-sync.yml` — раз в час тянет официальный `deepseek-ai/deepseek-harness` master в ветку-ПР `sync/upstream-master` (конфликты решаются в пользу форка);
+- `upstream-review.yml` — на каждом таком ПР гоняет sanity-гейты (typecheck + тесты) и прогоняет многоходовой headless-агент Knyazev (`knyazev-ai/deepseek-v4-flash`), который ревьюит дифф и отдаёт вердикт `{safe, summary, risks}`. Авто-мёрж ПР делается **только при вердикте safe**; risky остаётся человеку. Никогда ничего не деплоит.
+
+Для ревью в настройках репозитория форка нужен секрет `KNYAZEV_AI_API_KEY` (тот же ключ маршрута knyazev-ai).
+
+Для человека обновление сводится к `git pull` в клоне + `pnpm install && pnpm run build` — сами изменения upstream уже засинканы и отревьюены на стороне форка.
 
 Пока этот фикс не в официальном релизе, обычная установка по имени compaction-фикса не даёт — только запуск из форка.
 
