@@ -37,6 +37,23 @@ npx @deepseek-ai/dsh plugin --profile web add -w .
 
 Не копируй YAML руками и не дублируй провайдер в `settings.yaml`. Пакет кладёт маршрут в composition; ключ живёт в credentials.
 
+## Полная сборка с фиксом компактинга
+
+Обычная установка по имени использует официальный релиз DeepSeek Harness, в котором bounded-компактинг для огромных контекстов (400k) ещё не вышел. Если он нужен (большие сессии сжимаются по кусочкам, а не падают по `pi-ai stream idle timeout`) — запусти харнесс из форка с этим фиксом + плагин:
+
+```sh
+git clone https://github.com/knyazev741/deepseek-harness
+cd deepseek-harness
+pnpm install
+pnpm run build
+pnpm dsh plugin --profile web add @knyazevai/dsh
+pnpm dsh web
+```
+
+Фикс `maxSummarizationInputTokens` — код харнесса, он есть только в этой сборке; плагин несёт его конфиг (только для `knyazev-ai`). Обновление: `git pull`, затем `pnpm install && pnpm run build`.
+
+Пока этот фикс не в официальном релизе, обычная установка по имени compaction-фикса не даёт — только запуск из форка.
+
 ## Что ставится
 
 | Поле | Значение |
