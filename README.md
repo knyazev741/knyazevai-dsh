@@ -58,6 +58,35 @@ npx @deepseek-ai/dsh plugin --profile web update
 npx @deepseek-ai/dsh plugin --profile web remove -w @knyazevai/dsh
 ```
 
+## Релиз (публикация в npm)
+
+Пакет публикуется автоматически: GitHub Actions прогоняет тесты и на пуш тега `v<версия>` выкладывает `@knyazevai/dsh` в npm.
+
+Один раз настрой доступ:
+
+1. В npm (Account → Access Tokens) создай токен уровня **Automation** (без двухфакторки).
+2. На GitHub в репо → Settings → Secrets and variables → Actions добавь секрет `NPM_TOKEN` с этим токеном.
+3. `publishConfig.access: public` уже стоит в `package.json`.
+
+Дальше на каждый новый релиз:
+
+```sh
+npm version patch      # поднимает версию: patch | minor | major
+git push origin main
+git push origin v0.1.1 # пуш тега запускает тесты + публикацию
+```
+
+Тесты перед публикацией идут сами (`prepublishOnly` в `package.json`).
+
+Установка **по имени** — сразу после публикации, на любой машине:
+
+```sh
+npx @deepseek-ai/dsh plugin --profile web add @knyazevai/dsh
+npx @deepseek-ai/dsh web
+```
+
+Пока пакет не на npm — действует установка с GitHub из раздела «Установка».
+
 ## Docs
 
 https://knyazevai.work/docs
