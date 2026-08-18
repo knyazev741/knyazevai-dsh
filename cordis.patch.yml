@@ -10,6 +10,18 @@
         apiKeyEnv: KNYAZEV_AI_API_KEY
         api: openai-completions
         baseURL: https://knyazevai.work/v1
+        # 20 retries on transient failures, applied to every model of this
+        # provider. mode: always would retry until success (unbounded); normal
+        # bounds it to transient codes with a hard cap of 20 attempts.
+        retryPolicy:
+          mode: normal
+          maxRetries: 20
+          retryableCodes:
+            - RATE_LIMIT
+            - SERVER
+            - TIMEOUT
+            - TRANSPORT
+            - EMPTY_RESPONSE
         compat:
           thinkingFormat: qwen
           supportsReasoningEffort: false
@@ -35,3 +47,26 @@
             name: MiniMax 2.7
             contextWindow: 204800
             maxTokens: 40000
+
+# Compaction policy for huge Knyazev contexts. The harness code fix behind
+# maxSummarizationInputTokens lives in dsh-compaction-basic (harness commit
+# 078d3db591) and ships only with a harness build that contains it; this layer
+# carries just the knyazev-scoped policy. The global budget stays 0 (replay the
+# whole region = old behavior) so non-Knyazev providers are unaffected; only
+# knyazev-ai routes replay bounded input in small fast passes. compactionRetries
+# and maxOverflowRetries are bumped so a slow gateway prefill gets more chances.
+- id: compaction-basic
+  config:
+    maxSummarizationInputTokens: 0
+    compactionRetries: 2
+    maxOverflowRetries: 2
+    modelPolicies:
+      - provider: knyazev-ai
+        model: deepseek-v4-flash
+        maxSummarizationInputTokens: 131072
+      - provider: knyazev-ai
+        model: kimi-2.6
+        maxSummarizationInputTokens: 131072
+      - provider: knyazev-ai
+        model: minimax-2.7
+        maxSummarizationInputTokens: 131072
