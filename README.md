@@ -1,6 +1,6 @@
 # @knyazevai/dsh
 
-Плагин [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): провайдер **Knyazev AI**, модели Flash / Kimi / MiniMax, thinking и effort `off / high / max`. После установки Flash уже выбран — в Models остаётся только ключ.
+Плагин [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): провайдер **Knyazev AI**, модели Flash / Kimi / MiniMax, thinking и effort `off / high / max`. После установки выбран **Flash max** — в Models остаётся только ключ.
 
 ## Установка
 
@@ -29,7 +29,7 @@ npx @deepseek-ai/dsh plugin --profile web add -w .
 
 ## После установки
 
-Новые сессии сразу идут на **Knyazev AI / DeepSeek V4 Flash** (effort `high`). Kimi и MiniMax уже в пикере, сабагенты на том же маршруте.
+Новые сессии сразу идут на **Knyazev AI / DeepSeek V4 Flash** с effort **max**. Kimi и MiniMax уже в пикере, сабагенты на том же маршруте.
 
 Ключ в пакет не входит. Если `KNYAZEV_AI_API_KEY` ещё не в окружении — открой Harness → Models → **Knyazev AI** и вставь `kn_live_…` из [кабинета](https://knyazevai.work). Модели выбирать не нужно.
 
@@ -72,7 +72,7 @@ pnpm dsh web
 
 MiniMax без пикера effort: модель не отдаёт reasoning отдельным полем.
 
-Дефолт Harness после установки: `knyazev-ai` / `deepseek-v4-flash`. Сабагенты (`subagent`, `subagent_fork`) на том же маршруте.
+Дефолт Harness после установки: `knyazev-ai` / `deepseek-v4-flash`, effort `max`. Сабагенты (`subagent`, `subagent_fork`) на том же маршруте.
 
 ## Обновление / снятие
 

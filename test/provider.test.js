@@ -23,7 +23,7 @@ test("provider id and endpoint match the live API", () => {
   assert.equal(PROVIDER.api, "openai-completions");
   assert.equal(PROVIDER.compat.thinkingFormat, "qwen");
   assert.equal(PROVIDER.compat.supportsReasoningEffort, false);
-  assert.equal(PROVIDER.reasoning, "high");
+  assert.equal(PROVIDER.reasoning, "max");
 });
 
 test("Flash and Kimi expose off/high/max; MiniMax does not", () => {
@@ -33,7 +33,7 @@ test("Flash and Kimi expose off/high/max; MiniMax does not", () => {
   assert.deepEqual(flash.reasoningEfforts, { off: null, high: "high", max: "max" });
   assert.deepEqual(kimi.reasoningEfforts, REASONING_EFFORTS);
   assert.equal(minimax.reasoningEfforts, undefined);
-  assert.equal(DEFAULT_REASONING, "high");
+  assert.equal(DEFAULT_REASONING, "max");
 });
 
 test("package is a DSH bundle, not a plain dependency", () => {
@@ -51,7 +51,7 @@ test("patch restates llm-pi-ai with the same catalog", () => {
   assert.match(patch, new RegExp(`baseURL: ${BASE_URL}`));
   assert.match(patch, /thinkingFormat: qwen/);
   assert.match(patch, /supportsReasoningEffort: false/);
-  assert.match(patch, /reasoning: high/);
+  assert.match(patch, /reasoning: max/);
   for (const model of MODELS) {
     assert.match(patch, new RegExp(`id: ${model.id}`));
     assert.match(patch, new RegExp(`name: ${model.name}`));
@@ -62,13 +62,15 @@ test("patch restates llm-pi-ai with the same catalog", () => {
   assert.doesNotMatch(patch, /minimax-2\.7[\s\S]*reasoningEfforts/);
 });
 
-test("installing the bundle selects Flash as the Harness default", () => {
+test("installing the bundle selects Flash max as the Harness default", () => {
   assert.equal(DEFAULT_MODEL_ID, "deepseek-v4-flash");
+  assert.equal(DEFAULT_REASONING, "max");
   assert.equal(MODELS[0].id, DEFAULT_MODEL_ID);
   const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
   assert.match(patch, /^- id: agent-default-model$/m);
   assert.match(patch, new RegExp(`provider: ${PROVIDER_ID}`));
   assert.match(patch, new RegExp(`model: ${DEFAULT_MODEL_ID}`));
+  assert.match(patch, /^\s+reasoning: max$/m);
 });
 
 test("subagent tools inherit the same Knyazev route", () => {
