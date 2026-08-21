@@ -1,6 +1,6 @@
 {
   "name": "@knyazevai/dsh",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DeepSeek Harness plugin: Knyazev AI models with thinking and effort",
   "type": "module",
   "license": "MIT",
