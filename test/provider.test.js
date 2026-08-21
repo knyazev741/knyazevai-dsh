@@ -6,6 +6,7 @@ import test from "node:test";
 import {
   API_KEY_ENV,
   BASE_URL,
+  DEFAULT_MODEL_ID,
   DEFAULT_REASONING,
   MODELS,
   PROVIDER,
@@ -59,4 +60,21 @@ test("patch restates llm-pi-ai with the same catalog", () => {
   assert.match(patch, /high: high/);
   assert.match(patch, /max: max/);
   assert.doesNotMatch(patch, /minimax-2\.7[\s\S]*reasoningEfforts/);
+});
+
+test("installing the bundle selects Flash as the Harness default", () => {
+  assert.equal(DEFAULT_MODEL_ID, "deepseek-v4-flash");
+  assert.equal(MODELS[0].id, DEFAULT_MODEL_ID);
+  const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
+  assert.match(patch, /^- id: agent-default-model$/m);
+  assert.match(patch, new RegExp(`provider: ${PROVIDER_ID}`));
+  assert.match(patch, new RegExp(`model: ${DEFAULT_MODEL_ID}`));
+});
+
+test("subagent tools inherit the same Knyazev route", () => {
+  const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
+  assert.match(patch, /^- id: tool-subagent$/m);
+  assert.match(patch, /^- id: tool-subagent-fork$/m);
+  assert.match(patch, /toolName: subagent\n(?:.*\n)*?\s+agentOptions:\n\s+provider: knyazev-ai\n\s+model: deepseek-v4-flash/);
+  assert.match(patch, /toolName: subagent_fork\n(?:.*\n)*?\s+agentOptions:\n\s+provider: knyazev-ai\n\s+model: deepseek-v4-flash/);
 });

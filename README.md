@@ -1,8 +1,6 @@
 # @knyazevai/dsh
 
-Плагин [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): провайдер **Knyazev AI**, модели Flash / Kimi / MiniMax, thinking и effort `off / high / max` сразу.
-
-Ключ в пакет не входит. Его нужно вставить в Models после установки.
+Плагин [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): провайдер **Knyazev AI**, модели Flash / Kimi / MiniMax, thinking и effort `off / high / max`. После установки Flash уже выбран — в Models остаётся только ключ.
 
 ## Установка
 
@@ -31,11 +29,11 @@ npx @deepseek-ai/dsh plugin --profile web add -w .
 
 ## После установки
 
-1. Открой Harness → Models → **Knyazev AI**.
-2. Вставь ключ `kn_live_…` из [кабинета](https://knyazevai.work).
-3. Выбери `deepseek-v4-flash`. Effort по умолчанию — `high`. Пикер: Off / High / Max.
+Новые сессии сразу идут на **Knyazev AI / DeepSeek V4 Flash** (effort `high`). Kimi и MiniMax уже в пикере, сабагенты на том же маршруте.
 
-Не копируй YAML руками и не дублируй провайдер в `settings.yaml`. Пакет кладёт маршрут в composition; ключ живёт в credentials.
+Ключ в пакет не входит. Если `KNYAZEV_AI_API_KEY` ещё не в окружении — открой Harness → Models → **Knyazev AI** и вставь `kn_live_…` из [кабинета](https://knyazevai.work). Модели выбирать не нужно.
+
+Не копируй YAML руками и не дублируй провайдер в `settings.yaml`. Пакет кладёт маршрут и дефолт в composition; ключ живёт в credentials. Сохранённый выбор в `settings.yaml` по-прежнему перекрывает composition.
 
 ## Полная сборка с фиксом компактинга
 
@@ -74,7 +72,7 @@ pnpm dsh web
 
 MiniMax без пикера effort: модель не отдаёт reasoning отдельным полем.
 
-Дефолтную модель всего Harness пакет не меняет.
+Дефолт Harness после установки: `knyazev-ai` / `deepseek-v4-flash`. Сабагенты (`subagent`, `subagent_fork`) на том же маршруте.
 
 ## Обновление / снятие
 

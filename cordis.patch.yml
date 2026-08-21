@@ -48,6 +48,34 @@
             contextWindow: 204800
             maxTokens: 40000
 
+# New sessions start on Knyazev Flash. Patch config replaces the whole row,
+# so this is the composition default after install. A later picker choice
+# still writes settings.yaml and wins over this layer.
+- id: agent-default-model
+  config:
+    provider: knyazev-ai
+    model: deepseek-v4-flash
+
+# Spawned and forked children inherit the same route. Patch config replaces
+# the whole row, so the bundle's original fields are restated here.
+- id: tool-subagent
+  config:
+    provider: spawn
+    toolName: subagent
+    backgroundMode: continuable
+    agentOptions:
+      provider: knyazev-ai
+      model: deepseek-v4-flash
+
+- id: tool-subagent-fork
+  config:
+    provider: fork
+    toolName: subagent_fork
+    backgroundMode: one-shot
+    agentOptions:
+      provider: knyazev-ai
+      model: deepseek-v4-flash
+
 # Compaction policy for huge Knyazev contexts. The harness code fix behind
 # maxSummarizationInputTokens lives in dsh-compaction-basic (harness commit
 # 078d3db591) and ships only with a harness build that contains it; this layer

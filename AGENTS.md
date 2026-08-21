@@ -8,7 +8,7 @@
 
 - **`README.md` (корень)** — источник правды для пользователей: установка, использование, релиз. Обновление пользовательских инструкций идёт только там.
 - **`package.json`** — манифест бандла: `dsh.bundle.patch → ./cordis.patch.yml`, `publishConfig.access: public`, `files`.
-- **`cordis.patch.yml`** — конфиг-слой: переопределяет строку `llm-pi-ai` по `id` и задаёт маршрут `knyazev-ai` (baseURL, модели, effort). Применяется после `dsh-base` / `dsh-web-app`.
+- **`cordis.patch.yml`** — конфиг-слой: переопределяет `llm-pi-ai` (маршрут `knyazev-ai`), `agent-default-model` (Flash сразу после установки) и `tool-subagent` / `tool-subagent-fork` (дети на том же маршруте). Применяется после `dsh-base` / `dsh-web-app`.
 - **`lib/provider.js`** — каталог провайдера (константы `PROVIDER`, `MODELS`, `REASONING_EFFORTS`...).
 - **`test/provider.test.js`** — гейт: проверяет, что `cordis.patch.yml` и `lib/provider.js` **синхронны** между собой и с бандл-манифестом.
 
