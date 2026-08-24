@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
 import {
   API_KEY_ENV,
@@ -18,6 +18,26 @@ import {
 } from "../lib/provider.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const agentPresetPatchContributor = Symbol.for("dsh.agent-presets.patch-contributor");
+const harnessRoot = process.env.DSH_HARNESS_ROOT ?? join(root, "..", "deepseek-harness");
+const harnessCordisModule = join(harnessRoot, "vendor", "cordis", "lib", "index.js");
+const harnessAgentPresetsModule = join(harnessRoot, "packages", "preset", "agent-presets", "lib", "index.js");
+const canRunRealCordisComposition = existsSync(harnessCordisModule) && existsSync(harnessAgentPresetsModule);
+
+function contextWithContributor(contributor) {
+  return {
+    inject(deps, callback) {
+      assert.deepEqual(deps, ["agentPresets"]);
+      callback({
+        get(serviceName) {
+          assert.equal(serviceName, "agentPresets");
+          return { [agentPresetPatchContributor]: contributor };
+        },
+      });
+      return () => {};
+    },
+  };
+}
 
 const expectedCompactionPatch = {
   id: "compaction",
@@ -138,16 +158,8 @@ test("compaction plugin contributes the complete group replacement to non-minima
       return () => {};
     },
   };
-  const ctx = {
-    get(serviceName) {
-      assert.equal(serviceName, "agentPresets");
-      return {
-        [Symbol.for("dsh.agent-presets.patch-contributor")]: contributor,
-      };
-    },
-  };
 
-  apply(ctx);
+  apply(contextWithContributor(contributor));
 
   assert.deepEqual(
     registrations,
@@ -165,29 +177,127 @@ test("compaction plugin is a symbol-detected agent-presets plugin", () => {
   assert.deepEqual(inject, []);
 
   const registrations = [];
-  apply({
-    get(serviceName) {
-      assert.equal(serviceName, "agentPresets");
-      return {
-        [Symbol.for("dsh.agent-presets.patch-contributor")]: {
-          register(contribution) {
-            registrations.push(contribution);
-            return () => {};
-          },
-        },
-      };
+  apply(contextWithContributor({
+    register(contribution) {
+      registrations.push(contribution);
+      return () => {};
     },
-  });
+  }));
   assert.equal(registrations.length, 3);
 });
 
 test("compaction plugin remains headless-safe when agentPresets is not composed", () => {
+  const requested = [];
   assert.doesNotThrow(() => apply({
-    get(serviceName) {
-      assert.equal(serviceName, "agentPresets");
-      return undefined;
+    inject(deps, callback) {
+      requested.push(deps);
+      return () => {};
     },
   }));
+  assert.deepEqual(requested, [["agentPresets"]]);
+});
+
+test("compaction plugin registers after delayed agentPresets availability", () => {
+  const active = [];
+  let ownerDisposers = [];
+  const contributor = {
+    register(contribution) {
+      active.push(contribution);
+      const dispose = () => {
+        const index = active.indexOf(contribution);
+        if (index !== -1) active.splice(index, 1);
+      };
+      ownerDisposers.push(dispose);
+      return dispose;
+    },
+  };
+  let service;
+  let activate;
+  let deactivate = () => {};
+  const ctx = {
+    inject(deps, callback) {
+      assert.deepEqual(deps, ["agentPresets"]);
+      activate = () => {
+        ownerDisposers = [];
+        const childCtx = {
+          get(serviceName) {
+            assert.equal(serviceName, "agentPresets");
+            return service;
+          },
+        };
+        callback(childCtx);
+        // AgentPresets.register() owns each returned disposer in this child
+        // fiber; model that lifetime boundary in the dependency harness.
+        // The production service supplies this ownership internally.
+        const disposers = ownerDisposers;
+        deactivate = () => {
+          for (const dispose of disposers.reverse()) dispose();
+        };
+      };
+      return () => deactivate();
+    },
+  };
+
+  // The consumer is loaded before its optional provider exists.
+  apply(ctx);
+  assert.equal(active.length, 0);
+  assert.equal(typeof activate, "function");
+
+  service = { [agentPresetPatchContributor]: contributor };
+  activate();
+  assert.deepEqual(active.map(({ presetId }) => presetId), ["standard", "code", "cordis"]);
+  deactivate();
+  assert.equal(active.length, 0);
+  activate();
+  assert.deepEqual(active.map(({ presetId }) => presetId), ["standard", "code", "cordis"]);
+});
+
+test("compaction plugin follows real Cordis agentPresets lifecycle", { skip: !canRunRealCordisComposition }, async () => {
+  const [{ Context }, { AgentPresets }] = await Promise.all([
+    import(pathToFileURL(harnessCordisModule).href),
+    import(pathToFileURL(harnessAgentPresetsModule).href),
+  ]);
+  const ctx = new Context();
+  const consumer = ctx.plugin({ name: "consumer", apply });
+  let provider;
+  try {
+    // Real Cordis: the consumer fiber is active while its injected child waits.
+    await consumer;
+    assert.equal(ctx.get("agentPresets"), undefined);
+
+    provider = ctx.plugin({
+      name: "agent-presets-test",
+      apply(providerCtx) {
+        new AgentPresets(providerCtx, {
+          default: "standard",
+          roots: [],
+          includeUserRoot: false,
+        });
+      },
+    });
+    await provider;
+
+    const waitForContributions = async (expectedCount, serviceOverride) => {
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const service = serviceOverride ?? ctx.get("agentPresets");
+        const counts = service === undefined
+          ? []
+          : [...service.patchContributions].map(([presetId, target]) => [presetId, target.contributions.length]);
+        if (counts.length === 3 && counts.every(([, count]) => count === expectedCount)) return counts;
+        await new Promise((resolve) => setImmediate(resolve));
+      }
+      throw new Error(`timed out waiting for ${expectedCount} agent preset contributions`);
+    };
+
+    const service = ctx.get("agentPresets");
+    assert.ok(service);
+    assert.deepEqual(await waitForContributions(1, service), [["standard", 1], ["code", 1], ["cordis", 1]]);
+    await provider.dispose();
+    assert.deepEqual(await waitForContributions(0, service), [["standard", 0], ["code", 0], ["cordis", 0]]);
+  } finally {
+    await provider?.dispose();
+    await consumer.dispose();
+  }
 });
 
 test("bundle inserts the deployment plugin without enabling host compaction", () => {
