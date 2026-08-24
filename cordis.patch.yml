@@ -76,25 +76,9 @@
       provider: knyazev-ai
       model: deepseek-v4-flash
 
-# Compaction policy for huge Knyazev contexts. The harness code fix behind
-# maxSummarizationInputTokens lives in dsh-compaction-basic (harness commit
-# 078d3db591) and ships only with a harness build that contains it; this layer
-# carries just the knyazev-scoped policy. The global budget stays 0 (replay the
-# whole region = old behavior) so non-Knyazev providers are unaffected; only
-# knyazev-ai routes replay bounded input in small fast passes. compactionRetries
-# and maxOverflowRetries are bumped so a slow gateway prefill gets more chances.
-- id: compaction-basic
-  config:
-    maxSummarizationInputTokens: 0
-    compactionRetries: 2
-    maxOverflowRetries: 2
-    modelPolicies:
-      - provider: knyazev-ai
-        model: deepseek-v4-flash
-        maxSummarizationInputTokens: 131072
-      - provider: knyazev-ai
-        model: kimi-2.6
-        maxSummarizationInputTokens: 131072
-      - provider: knyazev-ai
-        model: minimax-2.7
-        maxSummarizationInputTokens: 131072
+# Agent Presets mount compaction in a nested `compaction` group. The deployment
+# plugin contributes a complete group replacement to standard, code, and
+# cordis at preset-mount time, while minimal intentionally keeps no compaction.
+- insert:
+    - id: knyazev-ai-compaction
+      name: '@knyazevai/dsh'

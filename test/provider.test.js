@@ -12,9 +12,58 @@ import {
   PROVIDER,
   PROVIDER_ID,
   REASONING_EFFORTS,
+  apply,
+  inject,
+  name,
 } from "../lib/provider.js";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+const expectedCompactionPatch = {
+  id: "compaction",
+  config: [
+    {
+      id: "compaction-basic",
+      name: "@deepseek-ai/dsh-compaction-basic",
+      config: {
+        maxSummarizationInputTokens: 0,
+        compactionRetries: 2,
+        maxOverflowRetries: 2,
+        modelPolicies: [
+          {
+            provider: "knyazev-ai",
+            model: "deepseek-v4-flash",
+            thresholdRatio: 0.5,
+            maxSummarizationInputTokens: 131072,
+          },
+          {
+            provider: "knyazev-ai",
+            model: "kimi-2.6",
+            maxSummarizationInputTokens: 131072,
+          },
+          {
+            provider: "knyazev-ai",
+            model: "minimax-2.7",
+            maxSummarizationInputTokens: 131072,
+          },
+        ],
+      },
+    },
+    {
+      id: "command-compact",
+      name: "@deepseek-ai/dsh-command-compact",
+    },
+    {
+      id: "tool-result-pruner",
+      name: "@deepseek-ai/dsh-compaction-tool-result-pruner",
+      config: {
+        thresholdChars: 8192,
+        headChars: 4096,
+        tailChars: 1024,
+      },
+    },
+  ],
+};
 
 test("provider id and endpoint match the live API", () => {
   assert.equal(PROVIDER_ID, "knyazev-ai");
@@ -79,4 +128,64 @@ test("subagent tools inherit the same Knyazev route", () => {
   assert.match(patch, /^- id: tool-subagent-fork$/m);
   assert.match(patch, /toolName: subagent\n(?:.*\n)*?\s+agentOptions:\n\s+provider: knyazev-ai\n\s+model: deepseek-v4-flash/);
   assert.match(patch, /toolName: subagent_fork\n(?:.*\n)*?\s+agentOptions:\n\s+provider: knyazev-ai\n\s+model: deepseek-v4-flash/);
+});
+
+test("compaction plugin contributes the complete group replacement to non-minimal presets", () => {
+  const registrations = [];
+  const contributor = {
+    register(contribution) {
+      registrations.push(contribution);
+      return () => {};
+    },
+  };
+  const ctx = {
+    agentPresets: {
+      [Symbol.for("dsh.agent-presets.patch-contributor")]: contributor,
+    },
+  };
+
+  apply(ctx);
+
+  assert.deepEqual(
+    registrations,
+    ["standard", "code", "cordis"].map((presetId) => ({
+      presetId,
+      patches: [expectedCompactionPatch],
+    })),
+  );
+  assert.deepEqual(registrations.map(({ presetId }) => presetId), ["standard", "code", "cordis"]);
+  assert.equal(registrations.some(({ presetId }) => presetId === "minimal"), false);
+});
+
+test("compaction plugin is a symbol-detected agent-presets plugin", () => {
+  assert.equal(name, "knyazev-ai-compaction");
+  assert.deepEqual(inject, ["agentPresets"]);
+
+  const registrations = [];
+  apply({
+    agentPresets: {
+      [Symbol.for("dsh.agent-presets.patch-contributor")]: {
+        register(contribution) {
+          registrations.push(contribution);
+          return () => {};
+        },
+      },
+    },
+  });
+  assert.equal(registrations.length, 3);
+});
+
+test("compaction plugin remains compatible when the optional contributor face is absent", () => {
+  assert.doesNotThrow(() => apply({ agentPresets: {} }));
+  assert.doesNotThrow(() => apply({}));
+});
+
+test("bundle inserts the deployment plugin without enabling host compaction", () => {
+  const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
+  assert.match(
+    patch,
+    /- insert:\n\s+- id: knyazev-ai-compaction\n\s+name: ['"]@knyazevai\/dsh['"]/,
+  );
+  assert.doesNotMatch(patch, /- id: compaction-basic\n\s+disabled: false/);
+  assert.doesNotMatch(patch, /- id: compaction\n\s+disabled: false/);
 });
