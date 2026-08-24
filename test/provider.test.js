@@ -139,8 +139,11 @@ test("compaction plugin contributes the complete group replacement to non-minima
     },
   };
   const ctx = {
-    agentPresets: {
-      [Symbol.for("dsh.agent-presets.patch-contributor")]: contributor,
+    get(serviceName) {
+      assert.equal(serviceName, "agentPresets");
+      return {
+        [Symbol.for("dsh.agent-presets.patch-contributor")]: contributor,
+      };
     },
   };
 
@@ -159,25 +162,32 @@ test("compaction plugin contributes the complete group replacement to non-minima
 
 test("compaction plugin is a symbol-detected agent-presets plugin", () => {
   assert.equal(name, "knyazev-ai-compaction");
-  assert.deepEqual(inject, ["agentPresets"]);
+  assert.deepEqual(inject, []);
 
   const registrations = [];
   apply({
-    agentPresets: {
-      [Symbol.for("dsh.agent-presets.patch-contributor")]: {
-        register(contribution) {
-          registrations.push(contribution);
-          return () => {};
+    get(serviceName) {
+      assert.equal(serviceName, "agentPresets");
+      return {
+        [Symbol.for("dsh.agent-presets.patch-contributor")]: {
+          register(contribution) {
+            registrations.push(contribution);
+            return () => {};
+          },
         },
-      },
+      };
     },
   });
   assert.equal(registrations.length, 3);
 });
 
-test("compaction plugin remains compatible when the optional contributor face is absent", () => {
-  assert.doesNotThrow(() => apply({ agentPresets: {} }));
-  assert.doesNotThrow(() => apply({}));
+test("compaction plugin remains headless-safe when agentPresets is not composed", () => {
+  assert.doesNotThrow(() => apply({
+    get(serviceName) {
+      assert.equal(serviceName, "agentPresets");
+      return undefined;
+    },
+  }));
 });
 
 test("bundle inserts the deployment plugin without enabling host compaction", () => {
