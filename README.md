@@ -44,7 +44,7 @@ git clone https://github.com/knyazev741/deepseek-harness
 cd deepseek-harness
 pnpm install
 pnpm run build
-pnpm dsh plugin --profile web add @knyazevai/dsh
+pnpm dsh plugin --profile fork-web add -w @knyazevai/dsh@0.1.4
 pnpm dsh web
 ```
 
@@ -101,14 +101,12 @@ git push origin v0.1.1 # пуш тега запускает тесты + пуб�
 
 Тесты перед публикацией идут сами (`prepublishOnly` в `package.json`).
 
-Установка **по имени** — сразу после публикации, на любой машине:
+Установка **по имени** — на любой машине:
 
 ```sh
-npx @deepseek-ai/dsh plugin --profile web add @knyazevai/dsh
+npx @deepseek-ai/dsh plugin --profile web add -w @knyazevai/dsh
 npx @deepseek-ai/dsh web
 ```
-
-Пока пакет не на npm — действует установка с GitHub из раздела «Установка».
 
 ## Docs
 
