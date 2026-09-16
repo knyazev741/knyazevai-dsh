@@ -58,6 +58,12 @@ const expectedCompactionPatch = {
           },
           {
             provider: "knyazev-ai",
+            model: "glm-5.3-flash",
+            thresholdRatio: 0.5,
+            maxSummarizationInputTokens: 131072,
+          },
+          {
+            provider: "knyazev-ai",
             model: "kimi-2.6",
             maxSummarizationInputTokens: 131072,
           },
@@ -308,4 +314,24 @@ test("bundle inserts the deployment plugin without enabling host compaction", ()
   );
   assert.doesNotMatch(patch, /- id: compaction-basic\n\s+disabled: false/);
   assert.doesNotMatch(patch, /- id: compaction\n\s+disabled: false/);
+});
+
+
+test("GLM inherits Flash context, effort, bounded compaction and provider retries", () => {
+  const glm = MODELS.find(m => m.id === "glm-5.3-flash");
+  assert.ok(glm);
+  assert.equal(glm.contextWindow, 400000);
+  assert.equal(glm.maxTokens, 40000);
+  assert.deepEqual(glm.reasoningEfforts, REASONING_EFFORTS);
+  const registrations = [];
+  apply(contextWithContributor({ register(c) { registrations.push(c); } }));
+  for (const registration of registrations) {
+    const config = registration.patches[0].config[0].config;
+    const flash = config.modelPolicies.find(p => p.model === "deepseek-v4-flash");
+    const policy = config.modelPolicies.find(p => p.model === glm.id);
+    assert.deepEqual(policy, { ...flash, model: glm.id });
+  }
+  const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
+  assert.match(patch, /retryPolicy:\s+mode: normal\s+maxRetries: 20/);
+  assert.match(patch, /id: glm-5\.3-flash\s+name: GLM 5\.3 Flash\s+contextWindow: 400000\s+maxTokens: 40000/);
 });

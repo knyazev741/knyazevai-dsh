@@ -66,7 +66,7 @@ pnpm dsh web
 |---|---|
 | Provider | `knyazev-ai` |
 | Endpoint | `https://knyazevai.work/v1` |
-| Models | `deepseek-v4-flash`, `kimi-2.6`, `minimax-2.7` |
+| Models | `deepseek-v4-flash`, `glm-5.3-flash`, `kimi-2.6`, `minimax-2.7` |
 | Thinking | qwen / `enable_thinking` |
 | Effort | `off`, `high`, `max` (Flash и Kimi) |
 
@@ -111,3 +111,7 @@ npx @deepseek-ai/dsh web
 ## Docs
 
 https://knyazevai.work/docs
+
+## GLM 5.3 Flash
+
+`glm-5.3-flash` маршрутизируется в OpenBroker `zai-org/GLM-5.3-Flash`. Контекст — 400 000 токенов (Gonka `--max-model-len`, проверено 16.09.2026), лимит ответа в harness — 40 000. Политика провайдера даёт до 20 retry при временных ошибках. Как у DeepSeek V4 Flash, компактизация начинается при 50% контекста, порциями до 131 072 токенов; compactionRetries и maxOverflowRetries — 2. Эти правила действуют в пресетах standard/code/cordis; minimal не включает компактизацию.
