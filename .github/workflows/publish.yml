@@ -1,10 +1,9 @@
-name: publish
+name: publish-dsh-provider
 
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'dsh-provider-v*'
 
 permissions:
   contents: read
@@ -20,11 +19,25 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org/
 
+      - name: Verify release identity
+        shell: bash
+        run: |
+          tag_version="${GITHUB_REF_NAME#dsh-provider-v}"
+          package_version="$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).version")"
+          test "$tag_version" = "$package_version" || {
+            echo "Tag version $tag_version does not match package version $package_version" >&2
+            exit 1
+          }
+          test "$(node -p "JSON.parse(require('node:fs').readFileSync('package.json', 'utf8')).name")" = '@knyazevai/dsh-provider'
+
       - name: Install
-        run: npm ci --ignore-scripts || npm install --ignore-scripts
+        run: npm install --ignore-scripts
 
       - name: Test
         run: npm test
+
+      - name: Inspect package
+        run: npm pack --dry-run
 
       - name: Publish to npm
         run: npm publish --access public

@@ -1,16 +1,20 @@
 {
-  "name": "@knyazevai/dsh",
-  "version": "0.1.4",
-  "description": "DeepSeek Harness plugin: Knyazev AI models with thinking and effort",
+  "name": "@knyazevai/dsh-provider",
+  "version": "0.1.0",
+  "description": "DeepSeek Harness provider bundle for the KnyazevAI API",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/knyazev741/knyazevai-dsh.git"
+    "url": "git+https://github.com/knyazev741/knyazevai-dsh.git"
   },
   "homepage": "https://knyazevai.work/docs",
   "bugs": {
-    "url": "https://git.knyazevai.work/knyaz/knyazevai-dsh/issues"
+    "url": "https://github.com/knyazev741/knyazevai-dsh/issues"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0",
+    "dsh": ">=0.1.5-rc.2"
   },
   "publishConfig": {
     "access": "public"
@@ -38,6 +42,8 @@
     "dsh",
     "deepseek-harness",
     "knyazevai",
+    "knyazevai-api",
+    "model-provider",
     "plugin"
   ]
 }

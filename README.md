@@ -1,117 +1,101 @@
-# @knyazevai/dsh
+# KnyazevAI DSH Provider
 
-Плагин [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): провайдер **Knyazev AI**, модели Flash / Kimi / MiniMax, thinking и effort `off / high / max`. После установки выбран **Flash max** — в Models остаётся только ключ.
+Плагин-провайдер для [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) и совместимых DSH Desktop-клиентов.
+
+- **KnyazevAI API** — сам API-сервис, кабинет и ключи на [knyazevai.work](https://knyazevai.work).
+- **KnyazevAI DSH Provider** — этот плагин, который добавляет KnyazevAI API и его модели в DSH.
+- npm-пакет: **`@knyazevai/dsh-provider`**.
+
+Плагин не устанавливает полный форк Harness и не заменяет системные пакеты DSH. Он добавляет маршрут `knyazev-ai`, модель по умолчанию и настройки компактинга для больших контекстов.
 
 ## Установка
 
-Нужны [Node.js](https://nodejs.org/) и [pnpm](https://pnpm.io/).
+### DSH Desktop
 
-Профили DSH — pnpm workspace, поэтому нужен `-w`.
+После появления плагина в каталоге:
+
+1. Открой **Settings → Plugin Market**.
+2. Найди **KnyazevAI DSH Provider**.
+3. Нажми **Install** и перезапусти Desktop, если он попросит.
+4. Открой **Settings → Models → KnyazevAI API** и вставь ключ `kn_live_…`.
+
+### Обычный DSH Web
 
 ```sh
-npx @deepseek-ai/dsh plugin --profile web add -w @knyazevai/dsh
+npx @deepseek-ai/dsh plugin --profile web add @knyazevai/dsh-provider
 npx @deepseek-ai/dsh web
 ```
 
-Пока пакет не на npm — ставь с GitHub:
-
-```sh
-npx @deepseek-ai/dsh plugin --profile web add -w git+https://github.com/knyazev741/knyazevai-dsh.git
-```
-
-Локально из клона:
-
-```sh
-npx @deepseek-ai/dsh plugin --profile web add -w .
-```
-
-Для headless то же с `--profile headless`.
+Для другого профиля замени `web` на его имя, например `headless`.
 
 ## После установки
 
-Новые сессии сразу идут на **Knyazev AI / DeepSeek V4 Flash** с effort **max**. Kimi и MiniMax уже в пикере, сабагенты на том же маршруте.
+Новые сессии по умолчанию используют:
 
-Ключ в пакет не входит. Если `KNYAZEV_AI_API_KEY` ещё не в окружении — открой Harness → Models → **Knyazev AI** и вставь `kn_live_…` из [кабинета](https://knyazevai.work). Модели выбирать не нужно.
-
-Не копируй YAML руками и не дублируй провайдер в `settings.yaml`. Пакет кладёт маршрут и дефолт в composition; ключ живёт в credentials. Сохранённый выбор в `settings.yaml` по-прежнему перекрывает composition.
-
-## Полная сборка с фиксом компактинга
-
-Обычная установка по имени использует официальный релиз DeepSeek Harness, в котором bounded-компактинг для огромных контекстов (400k) ещё не вышел. Если он нужен (большие сессии сжимаются по кусочкам, а не падают по `pi-ai stream idle timeout`) — запусти харнесс из форка с этим фиксом + плагин:
-
-```sh
-git clone https://github.com/knyazev741/deepseek-harness
-cd deepseek-harness
-pnpm install
-pnpm run build
-pnpm dsh plugin --profile fork-web add -w @knyazevai/dsh@0.1.4
-pnpm dsh web
+```text
+Provider: knyazev-ai
+Model:    deepseek-v4-flash
 ```
 
-Фикс `maxSummarizationInputTokens` — код харнесса, он есть только в этой сборке; плагин несёт его конфиг (только для `knyazev-ai`).
+Ключ в npm-пакет не входит. Он хранится в credentials DSH под ссылкой `KNYAZEV_AI_API_KEY`. В интерфейсе достаточно открыть **Models → KnyazevAI API** и вставить ключ из кабинета.
 
-**Как форк держится свежим по upstream (автоматически, с AI-ревью).** В форке есть два воркфлоу:
-- `upstream-sync.yml` — раз в час тянет официальный `deepseek-ai/deepseek-harness` master в ветку-ПР `sync/upstream-master` (конфликты решаются в пользу форка);
-- `upstream-review.yml` — на каждом таком ПР гоняет sanity-гейты (typecheck + тесты) и прогоняет многоходовой headless-агент Knyazev (`knyazev-ai/deepseek-v4-flash`), который ревьюит дифф и отдаёт вердикт `{safe, summary, risks}`. Авто-мёрж ПР делается **только при вердикте safe**; risky остаётся человеку. Никогда ничего не деплоит.
+Не копируй provider YAML вручную и не дублируй его в `settings.yaml`: bundle уже добавляет маршрут в composition. Пользовательские настройки DSH по-прежнему имеют приоритет над дефолтами плагина.
 
-Для ревью в настройках репозитория форка нужен секрет `KNYAZEV_AI_API_KEY` (тот же ключ маршрута knyazev-ai).
+## Модели
 
-Для человека обновление сводится к `git pull` в клоне + `pnpm install && pnpm run build` — сами изменения upstream уже засинканы и отревьюены на стороне форка.
+| Модель | Контекст | Максимальный ответ | Effort |
+|---|---:|---:|---|
+| `deepseek-v4-flash` | 400 000 | 40 000 | `off`, `high`, `max` |
+| `glm-5.3-flash` | 400 000 | 40 000 | `low`, `high`, `max` |
+| `kimi-2.6` | 262 144 | 40 000 | `off`, `high`, `max` |
+| `minimax-2.7` | 204 800 | 40 000 | выключен |
 
-Пока этот фикс не в официальном релизе, обычная установка по имени compaction-фикса не даёт — только запуск из форка.
+DeepSeek и Kimi используют Qwen-style thinking. GLM передаёт уровень через OpenAI-style `reasoning_effort`. MiniMax явно объявлен как модель без reasoning, поэтому не наследует effort, ранее выбранный для другой модели.
 
-## Что ставится
+Сабагенты `subagent` и `subagent_fork` по умолчанию используют тот же маршрут `knyazev-ai/deepseek-v4-flash`.
 
-| Поле | Значение |
-|---|---|
-| Provider | `knyazev-ai` |
-| Endpoint | `https://knyazevai.work/v1` |
-| Models | `deepseek-v4-flash`, `glm-5.3-flash`, `kimi-2.6`, `minimax-2.7` |
-| Thinking | qwen / `enable_thinking` |
-| Effort | `off`, `high`, `max` (Flash и Kimi) |
+## Миграция со старого имени
 
-MiniMax без пикера effort: модель не отдаёт reasoning отдельным полем.
-
-Дефолт Harness после установки: `knyazev-ai` / `deepseek-v4-flash`, effort `max`. Сабагенты (`subagent`, `subagent_fork`) на том же маршруте.
-
-## Обновление / снятие
+Версии `@knyazevai/dsh` до `0.1.4` были ранними версиями этого provider-плагина. Начиная с `0.1.5`, имя `@knyazevai/dsh` принадлежит полной сборке KnyazevAI DSH, поэтому provider переехал в отдельный пакет.
 
 ```sh
-npx @deepseek-ai/dsh plugin --profile web update
-npx @deepseek-ai/dsh plugin --profile web remove -w @knyazevai/dsh
+npx @deepseek-ai/dsh plugin --profile web remove @knyazevai/dsh
+npx @deepseek-ai/dsh plugin --profile web add @knyazevai/dsh-provider
 ```
 
-## Релиз (публикация в npm)
+Если в `~/.dsh/settings.yaml` осталась строка `reasoning: high` или `reasoning: max` внутри `providers.knyazev-ai`, удали её. Старый общий effort мог ошибочно применяться к MiniMax; новая версия хранит reasoning только на уровне поддерживающих его моделей.
 
-Пакет публикуется автоматически: GitHub Actions прогоняет тесты и на пуш тега `v<версия>` выкладывает `@knyazevai/dsh` в npm.
-
-Один раз настрой доступ:
-
-1. В npm (Account → Access Tokens) создай токен уровня **Automation** (без двухфакторки).
-2. На GitHub в репо → Settings → Secrets and variables → Actions добавь секрет `NPM_TOKEN` с этим токеном.
-3. `publishConfig.access: public` уже стоит в `package.json`.
-
-Дальше на каждый новый релиз:
+## Обновление и удаление
 
 ```sh
-npm version patch      # поднимает версию: patch | minor | major
-git push origin main
-git push origin v0.1.1 # пуш тега запускает тесты + публикацию
+npx @deepseek-ai/dsh plugin --profile web update @knyazevai/dsh-provider
+npx @deepseek-ai/dsh plugin --profile web remove @knyazevai/dsh-provider
 ```
 
-Тесты перед публикацией идут сами (`prepublishOnly` в `package.json`).
+## Что находится в пакете
 
-Установка **по имени** — на любой машине:
+- `package.json` с `dsh.bundle.patch`;
+- `cordis.patch.yml` с маршрутом KnyazevAI API и дефолтной моделью;
+- `lib/provider.js` с каталогом моделей и опциональной политикой компактинга;
+- тест, который не даёт каталогу и patch-файлу разойтись.
+
+Пакет совместим с официальным DSH начиная с `0.1.5-rc.2`. Для новых возможностей компактинга используется feature detection: на старой сборке провайдер продолжит работать, а неподдерживаемая политика просто не зарегистрируется.
+
+## Разработка
 
 ```sh
-npx @deepseek-ai/dsh plugin --profile web add -w @knyazevai/dsh
-npx @deepseek-ai/dsh web
+npm test
+npm pack --dry-run
 ```
 
-## Docs
+Релиз публикуется из GitHub Actions по тегу вида:
+
+```sh
+dsh-provider-v0.1.0
+```
+
+Версия тега должна совпадать с `package.json`.
+
+## Документация API
 
 https://knyazevai.work/docs
-
-## GLM 5.3 Flash
-
-`glm-5.3-flash` маршрутизируется в OpenBroker `zai-org/GLM-5.3-Flash`. Контекст — 400 000 токенов (Gonka `--max-model-len`, проверено 16.09.2026), лимит ответа в harness — 40 000. Политика провайдера даёт до 20 retry при временных ошибках. Как у DeepSeek V4 Flash, компактизация начинается при 50% контекста, порциями до 131 072 токенов; compactionRetries и maxOverflowRetries — 2. Эти правила действуют в пресетах standard/code/cordis; minimal не включает компактизацию.
