@@ -58,9 +58,9 @@ npm pack --dry-run
 ```sh
 npm test
 npm pack --dry-run
-git tag dsh-provider-v0.1.0
+git tag dsh-provider-v0.1.1
 git push github main
-git push github dsh-provider-v0.1.0
+git push github dsh-provider-v0.1.1
 ```
 
 GitHub Actions публикует `@knyazevai/dsh-provider` с `publishConfig.access: public`. Для workflow нужен `NPM_TOKEN` с правом публикации в scope `@knyazevai`.

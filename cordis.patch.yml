@@ -23,8 +23,8 @@
             - TRANSPORT
             - EMPTY_RESPONSE
         compat:
-          thinkingFormat: qwen
-          supportsReasoningEffort: false
+          thinkingFormat: openai
+          supportsReasoningEffort: true
         models:
           - id: deepseek-v4-flash
             name: DeepSeek V4 Flash
@@ -40,17 +40,6 @@
             maxTokens: 40000
             reasoningEfforts:
               low: low
-              high: high
-              max: max
-            compat:
-              thinkingFormat: openai
-              supportsReasoningEffort: true
-          - id: kimi-2.6
-            name: Kimi 2.6
-            contextWindow: 262144
-            maxTokens: 40000
-            reasoningEfforts:
-              off: null
               high: high
               max: max
           - id: minimax-2.7

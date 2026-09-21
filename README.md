@@ -47,10 +47,9 @@ Model:    deepseek-v4-flash
 |---|---:|---:|---|
 | `deepseek-v4-flash` | 400 000 | 40 000 | `off`, `high`, `max` |
 | `glm-5.3-flash` | 400 000 | 40 000 | `low`, `high`, `max` |
-| `kimi-2.6` | 262 144 | 40 000 | `off`, `high`, `max` |
 | `minimax-2.7` | 204 800 | 40 000 | выключен |
 
-DeepSeek и Kimi используют Qwen-style thinking. GLM передаёт уровень через OpenAI-style `reasoning_effort`. MiniMax явно объявлен как модель без reasoning, поэтому не наследует effort, ранее выбранный для другой модели.
+DeepSeek и GLM передают выбранный уровень через OpenAI-style `reasoning_effort`; API сам нормализует DeepSeek под его upstream thinking wire. MiniMax явно объявлен как модель без reasoning, поэтому не наследует effort, ранее выбранный для другой модели. Kimi 2.6 удалён из каталога, потому что живой KnyazevAI API больше его не публикует.
 
 Сабагенты `subagent` и `subagent_fork` по умолчанию используют тот же маршрут `knyazev-ai/deepseek-v4-flash`.
 
@@ -91,7 +90,7 @@ npm pack --dry-run
 Релиз публикуется из GitHub Actions по тегу вида:
 
 ```sh
-dsh-provider-v0.1.0
+dsh-provider-v0.1.1
 ```
 
 Версия тега должна совпадать с `package.json`.

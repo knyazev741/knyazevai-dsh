@@ -1,6 +1,6 @@
 {
   "name": "@knyazevai/dsh-provider",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "DeepSeek Harness provider bundle for the KnyazevAI API",
   "type": "module",
   "license": "MIT",

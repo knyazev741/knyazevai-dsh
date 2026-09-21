@@ -65,11 +65,6 @@ const expectedCompactionPatch = {
           },
           {
             provider: "knyazev-ai",
-            model: "kimi-2.6",
-            maxSummarizationInputTokens: 131072,
-          },
-          {
-            provider: "knyazev-ai",
             model: "minimax-2.7",
             maxSummarizationInputTokens: 131072,
           },
@@ -98,8 +93,8 @@ test("provider id and endpoint match the live API", () => {
   assert.equal(PROVIDER.baseURL, "https://knyazevai.work/v1");
   assert.equal(PROVIDER.displayName, "KnyazevAI API");
   assert.equal(PROVIDER.api, "openai-completions");
-  assert.equal(PROVIDER.compat.thinkingFormat, "qwen");
-  assert.equal(PROVIDER.compat.supportsReasoningEffort, false);
+  assert.equal(PROVIDER.compat.thinkingFormat, "openai");
+  assert.equal(PROVIDER.compat.supportsReasoningEffort, true);
   assert.equal(Object.hasOwn(PROVIDER, "reasoning"), false);
 });
 
@@ -111,19 +106,22 @@ test("legacy default reasoning export remains importable without forcing the pro
 test("model-specific reasoning controls match each API wire format", () => {
   const flash = MODELS.find((model) => model.id === "deepseek-v4-flash");
   const glm = MODELS.find((model) => model.id === "glm-5.3-flash");
-  const kimi = MODELS.find((model) => model.id === "kimi-2.6");
   const minimax = MODELS.find((model) => model.id === "minimax-2.7");
   assert.deepEqual(flash.reasoningEfforts, REASONING_EFFORTS);
-  assert.deepEqual(kimi.reasoningEfforts, REASONING_EFFORTS);
   assert.deepEqual(glm.reasoningEfforts, GLM_REASONING_EFFORTS);
-  assert.deepEqual(glm.compat, { thinkingFormat: "openai", supportsReasoningEffort: true });
+  assert.equal(glm.compat, undefined);
   assert.equal(minimax.reasoningEfforts, false);
+  assert.deepEqual(MODELS.map((model) => model.id), [
+    "deepseek-v4-flash",
+    "glm-5.3-flash",
+    "minimax-2.7",
+  ]);
 });
 
 test("package is a DSH bundle, not a plain dependency", () => {
   const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   assert.equal(manifest.name, "@knyazevai/dsh-provider");
-  assert.equal(manifest.version, "0.1.0");
+  assert.equal(manifest.version, "0.1.1");
   assert.equal(manifest.description, "DeepSeek Harness provider bundle for the KnyazevAI API");
   assert.equal(manifest.dsh.bundle.patch, "./cordis.patch.yml");
   assert.equal(manifest.publishConfig.access, "public");
@@ -136,8 +134,8 @@ test("patch restates llm-pi-ai with the same catalog", () => {
   assert.match(patch, new RegExp(`apiKeyEnv: ${API_KEY_ENV}`));
   assert.match(patch, new RegExp(`baseURL: ${BASE_URL}`));
   assert.match(patch, /displayName: KnyazevAI API/);
-  assert.match(patch, /thinkingFormat: qwen/);
-  assert.match(patch, /supportsReasoningEffort: false/);
+  assert.match(patch, /thinkingFormat: openai/);
+  assert.match(patch, /supportsReasoningEffort: true/);
   assert.doesNotMatch(patch, /^\s+reasoning:\s/m);
   for (const model of MODELS) {
     assert.match(patch, new RegExp(`id: ${model.id}`));
@@ -335,7 +333,7 @@ test("GLM inherits Flash context, effort, bounded compaction and provider retrie
   assert.equal(glm.contextWindow, 400000);
   assert.equal(glm.maxTokens, 40000);
   assert.deepEqual(glm.reasoningEfforts, GLM_REASONING_EFFORTS);
-  assert.deepEqual(glm.compat, { thinkingFormat: "openai", supportsReasoningEffort: true });
+  assert.equal(glm.compat, undefined);
   const registrations = [];
   apply(contextWithContributor({ register(c) { registrations.push(c); } }));
   for (const registration of registrations) {
@@ -346,5 +344,6 @@ test("GLM inherits Flash context, effort, bounded compaction and provider retrie
   }
   const patch = readFileSync(join(root, "cordis.patch.yml"), "utf8");
   assert.match(patch, /retryPolicy:\s+mode: normal\s+maxRetries: 20/);
-  assert.match(patch, /id: glm-5\.3-flash\s+name: GLM 5\.3 Flash\s+contextWindow: 400000\s+maxTokens: 40000\s+reasoningEfforts:\s+low: low\s+high: high\s+max: max\s+compat:\s+thinkingFormat: openai\s+supportsReasoningEffort: true/);
+  assert.match(patch, /id: glm-5\.3-flash\s+name: GLM 5\.3 Flash\s+contextWindow: 400000\s+maxTokens: 40000\s+reasoningEfforts:\s+low: low\s+high: high\s+max: max/);
+  assert.doesNotMatch(patch, /kimi-2\.6/);
 });
