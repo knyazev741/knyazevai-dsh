@@ -31,7 +31,7 @@
             contextWindow: 400000
             maxTokens: 40000
             reasoningEfforts:
-              off: null
+              off: off
               high: high
               max: max
           - id: glm-5.3-flash

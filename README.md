@@ -49,7 +49,7 @@ Model:    deepseek-v4-flash
 | `glm-5.3-flash` | 400 000 | 40 000 | `low`, `high`, `max` |
 | `minimax-2.7` | 204 800 | 40 000 | выключен |
 
-DeepSeek и GLM передают выбранный уровень через OpenAI-style `reasoning_effort`; API сам нормализует DeepSeek под его upstream thinking wire. MiniMax явно объявлен как модель без reasoning, поэтому не наследует effort, ранее выбранный для другой модели. Kimi 2.6 удалён из каталога, потому что живой KnyazevAI API больше его не публикует.
+DeepSeek и GLM передают выбранный уровень через OpenAI-style `reasoning_effort`; API сам нормализует DeepSeek под его upstream thinking wire. Для DeepSeek `off` передаётся явно, потому что API по умолчанию включает thinking. MiniMax явно объявлен как модель без reasoning, поэтому не наследует effort, ранее выбранный для другой модели. Kimi 2.6 удалён из каталога, потому что живой KnyazevAI API больше его не публикует.
 
 Сабагенты `subagent` и `subagent_fork` по умолчанию используют тот же маршрут `knyazev-ai/deepseek-v4-flash`.
 
@@ -63,6 +63,8 @@ npx @deepseek-ai/dsh plugin --profile web add @knyazevai/dsh-provider
 ```
 
 Если в `~/.dsh/settings.yaml` осталась строка `reasoning: high` или `reasoning: max` внутри `providers.knyazev-ai`, удали её. Старый общий effort мог ошибочно применяться к MiniMax; новая версия хранит reasoning только на уровне поддерживающих его моделей.
+
+Если профиль уже сохранял собственный массив `providers.knyazev-ai.models`, обновление плагина не перезапишет его автоматически. После обновления открой **Settings → Models → KnyazevAI API**, нажми **Fetch available models**, оставь отмеченными строки, предложенные для исправления, затем нажми **Adopt** и **Apply**. Это восстановит Effort для DeepSeek и GLM, не меняя вручную настроенные лимиты. Старую строку `kimi-2.6` удали вручную: API эту модель больше не публикует.
 
 ## Обновление и удаление
 
@@ -90,7 +92,7 @@ npm pack --dry-run
 Релиз публикуется из GitHub Actions по тегу вида:
 
 ```sh
-dsh-provider-v0.1.1
+dsh-provider-v0.1.2
 ```
 
 Версия тега должна совпадать с `package.json`.

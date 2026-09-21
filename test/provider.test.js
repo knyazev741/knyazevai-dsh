@@ -107,6 +107,7 @@ test("model-specific reasoning controls match each API wire format", () => {
   const flash = MODELS.find((model) => model.id === "deepseek-v4-flash");
   const glm = MODELS.find((model) => model.id === "glm-5.3-flash");
   const minimax = MODELS.find((model) => model.id === "minimax-2.7");
+  assert.deepEqual(REASONING_EFFORTS, { off: "off", high: "high", max: "max" });
   assert.deepEqual(flash.reasoningEfforts, REASONING_EFFORTS);
   assert.deepEqual(glm.reasoningEfforts, GLM_REASONING_EFFORTS);
   assert.equal(glm.compat, undefined);
@@ -121,7 +122,7 @@ test("model-specific reasoning controls match each API wire format", () => {
 test("package is a DSH bundle, not a plain dependency", () => {
   const manifest = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
   assert.equal(manifest.name, "@knyazevai/dsh-provider");
-  assert.equal(manifest.version, "0.1.1");
+  assert.equal(manifest.version, "0.1.2");
   assert.equal(manifest.description, "DeepSeek Harness provider bundle for the KnyazevAI API");
   assert.equal(manifest.dsh.bundle.patch, "./cordis.patch.yml");
   assert.equal(manifest.publishConfig.access, "public");
@@ -141,7 +142,7 @@ test("patch restates llm-pi-ai with the same catalog", () => {
     assert.match(patch, new RegExp(`id: ${model.id}`));
     assert.match(patch, new RegExp(`name: ${model.name}`));
   }
-  assert.match(patch, /off: null/);
+  assert.match(patch, /off: off/);
   assert.match(patch, /low: low/);
   assert.match(patch, /high: high/);
   assert.match(patch, /max: max/);
